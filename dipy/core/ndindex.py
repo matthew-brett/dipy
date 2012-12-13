@@ -26,11 +26,16 @@ def ndindex(shape):
     (1, 1, 0)
     (2, 0, 0)
     (2, 1, 0)
-
     """
     if len(shape) == 0:
         yield ()
-    else:
+        return
+    try: # np.nditer present from numpy 1.6.0
+        np.nditer
+    except AttributeError:
+        for ix in np.ndindex(*shape):
+            yield ix
+    else: # nditer version much faster
         x = as_strided(np.zeros(1), shape=shape, strides=np.zeros_like(shape))
         ndi = np.nditer(x, flags=['multi_index', 'zerosize_ok'], order='C')
         for e in ndi:
