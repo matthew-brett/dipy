@@ -79,7 +79,7 @@ dipy distribution.
 NUMPY_MIN_VERSION='1.3'
 SCIPY_MIN_VERSION='0.7.2'
 CYTHON_MIN_VERSION='0.17'
-NIBABEL_MIN_VERSION='1.0.0'
+NIBABEL_MIN_VERSION='1.2.0'
 
 # Main setup parameters
 NAME                = 'dipy'
