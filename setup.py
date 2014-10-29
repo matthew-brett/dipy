@@ -73,7 +73,7 @@ from distutils.extension import Extension
 from distutils.command import build_py, build_ext
 
 from cythexts import cyproc_exts, get_pyx_sdist, derror_maker
-from setup_helpers import install_scripts_bat, add_flag_checking
+from setup_helpers import install_scripts_bat, add_flag_checking, check_npymath
 
 # Define extensions
 EXTS = []
@@ -122,6 +122,9 @@ else: # We have nibabel
     build_ext = cyproc_exts(EXTS, CYTHON_MIN_VERSION, 'pyx-stamps')
     # Add openmp flags if they work
     extbuilder = add_flag_checking(build_ext, [('-fopenmp', 'HAVE_OPENMP')])
+    # Fix npymath libraries for Windows
+    if os.name == 'nt':
+        extbuilder = check_npymath(extbuilder)
 
 # Installer that checks for install-time dependencies
 class installer(install.install):
