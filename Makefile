@@ -95,4 +95,7 @@ binary-release: clean
 	$(PYTHON) setup_egg.py bdist_egg
 
 build-stamp-source:
+	@echo "********************** WARNING ***************************"
+	@echo "Writing cython .c files for default compiler configuration"
+	@echo "**********************************************************"
 	$(PYTHON) -c 'import cythexts; cythexts.build_stamp_source()'

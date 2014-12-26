@@ -1,5 +1,6 @@
 import os
 from os.path import splitext, sep as filesep, join as pjoin, relpath
+import sys
 from hashlib import sha1
 from subprocess import check_call
 
@@ -141,6 +142,8 @@ def build_stamp(pyxes):
         hash>; "c_filename", <c filemane>; "c_hash", <c file SHA1 hash>.
     """
     pyx_defs = {}
+    # Write cython configuration file for default compiler configuration
+    check_call([sys.executable, 'setup.py', 'write_config'])
     for source in pyxes:
         base, ext = splitext(source)
         pyx_hash = sha1(open(source, 'rt').read()).hexdigest()

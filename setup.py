@@ -118,6 +118,7 @@ except ImportError: # No nibabel
            ' - please install nibabel first')
     pybuilder = derror_maker(build_py.build_py, msg)
     extbuilder = derror_maker(build_ext.build_ext, msg)
+    write_config = derror_maker(build_ext.build_ext, msg)
     def package_check(*args, **kwargs):
         raise RuntimeError(msg + " or try 'python setup_egg.py install'")
 else: # We have nibabel
@@ -129,10 +130,12 @@ else: # We have nibabel
     simple_test_c = """int main(int argc, char** argv) { return(0); }"""
     omp_test_c = """#include <omp.h>
     int main(int argc, char** argv) { return(0); }"""
-    extbuilder = add_flag_checking(
-        build_ext, [[['/arch:SSE2'], [], simple_test_c, 'USING_VC_SSE2'],
-            [['-msse2', '-mfpmath=sse'], [], simple_test_c, 'USING_GCC_SSE2'],
-            [['-fopenmp'], ['-fopenmp'], omp_test_c, 'HAVE_OPENMP']], 'dipy')
+    flag_defs = [
+        [['/arch:SSE2'], [], simple_test_c, 'USING_VC_SSE2'],
+        [['-msse2', '-mfpmath=sse'], [], simple_test_c, 'USING_GCC_SSE2'],
+        [['-fopenmp'], ['-fopenmp'], omp_test_c, 'HAVE_OPENMP']]
+    extbuilder = add_flag_checking(build_ext, flag_defs, 'dipy', True)
+    write_config = add_flag_checking(build_ext, flag_defs, 'dipy', False)
     # Fix npymath libraries for Windows
     if os.name == 'nt':
         extbuilder = check_npymath(extbuilder)
@@ -147,6 +150,7 @@ class installer(install.install):
 
 
 cmdclass = dict(
+    write_config=write_config,
     build_py=pybuilder,
     build_ext=extbuilder,
     install=installer,
