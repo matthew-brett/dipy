@@ -93,6 +93,3 @@ source-release: clean
 
 binary-release: clean
 	$(PYTHON) setup_egg.py bdist_egg
-
-build-stamp-source:
-	$(PYTHON) -c 'import cythexts; cythexts.build_stamp_source()'

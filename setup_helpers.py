@@ -251,3 +251,11 @@ def check_npymath(build_ext_class):
             build_ext_class.build_extensions(self)
 
     return LibModder
+
+
+def derror_maker(klass, msg):
+    """ Decorate distutils class to make run method raise error """
+    class K(klass):
+        def run(self):
+            raise RuntimeError(msg)
+    return K

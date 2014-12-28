@@ -38,7 +38,8 @@ if 'setuptools' in sys.modules:
     # filenames to .c filenames, and we probably don't have the .c files.
     sys.path.insert(0, pjoin(dirname(__file__), 'fake_pyrex'))
     # Set setuptools extra arguments
-    nibabel_spec = 'nibabel>=' + NIBABEL_MIN_VERSION
+    install_specs = ['nibabel>=' + NIBABEL_MIN_VERSION,
+                     'cython>=' + CYTHON_MIN_VERSION]
     extra_setuptools_args = dict(
         tests_require=['nose'],
         test_suite='nose.collector',
@@ -46,7 +47,7 @@ if 'setuptools' in sys.modules:
         extras_require = dict(
             doc=['Sphinx>=1.0'],
             test=['nose>=0.10.1']),
-        install_requires = [nibabel_spec])
+        install_requires = install_specs)
     # I removed numpy and scipy from install requires because easy_install seems
     # to want to fetch these if they are already installed, meaning of course
     # that there's a long fragile and unnecessary compile before the install
@@ -61,7 +62,7 @@ if 'setuptools' in sys.modules:
     # http://stackoverflow.com/questions/12060925/best-way-to-share-code-across-several-setup-py-scripts
     # with thanks
     from setuptools.dist import Distribution
-    Distribution(dict(setup_requires=nibabel_spec))
+    Distribution(dict(setup_requires=install_specs))
 else:
     extra_setuptools_args = {}
     from distutils.command import install
@@ -70,10 +71,11 @@ else:
 # MANIFEST
 from distutils.core import setup
 from distutils.extension import Extension
-from distutils.command import build_py, build_ext
+from distutils.command.build_py import build_py
+from distutils.command.build_ext import build_ext
 
-from cythexts import cyproc_exts, get_pyx_sdist, derror_maker
-from setup_helpers import install_scripts_bat, add_flag_checking, check_npymath
+from setup_helpers import (install_scripts_bat, add_flag_checking,
+                           check_npymath, derror_maker)
 
 # Define extensions
 EXTS = []
@@ -106,25 +108,36 @@ for modulename, other_sources, language in (
                           **ext_kwargs))
 
 
-# Do our own build and install time dependency checking. setup.py gets called in
-# many different ways, and may be called just to collect information (egg_info).
-# We need to set up tripwires to raise errors when actually doing things, like
-# building, rather than unconditionally in the setup.py import or exec
-# We may make tripwire versions of build_ext, build_py, install
+# Do our own build and install time dependency checking. setup.py gets called
+# in many different ways, and may be called just to collect information
+# (egg_info).  We need to set up tripwires to raise errors when actually doing
+# things, like building, rather than unconditionally in the setup.py import or
+# exec We may make tripwire versions of build_ext, build_py, install
+try:
+    from Cython.Distutils import build_ext
+except ImportError:  # No Cython
+    have_cython = False
+else:
+    have_cython = True
 try:
     from nisext.sexts import package_check, get_comrec_build
 except ImportError: # No nibabel
-    msg = ('Need nisext package from nibabel installation'
-           ' - please install nibabel first')
-    pybuilder = derror_maker(build_py.build_py, msg)
-    extbuilder = derror_maker(build_ext.build_ext, msg)
+    have_nisext = False
+else:
+    have_nisext = True
+if not have_cython or not have_nisext:
+    needed = []
+    if not have_cython:
+        needed.append('Cython package')
+    if not have_nisext:
+        needed.append('nisext from nibabel package')
+    msg = 'need ' + ', '.join(needed)
+    pybuilder = derror_maker(build_py, msg)
+    extbuilder = derror_maker(build_ext, msg)
     def package_check(*args, **kwargs):
         raise RuntimeError(msg + " or try 'python setup_egg.py install'")
-else: # We have nibabel
+else: # We have nibabel and cython
     pybuilder = get_comrec_build('dipy')
-    # Cython is a dependency for building extensions, iff we don't have stamped
-    # up pyx and c files.
-    build_ext = cyproc_exts(EXTS, CYTHON_MIN_VERSION, 'pyx-stamps')
     # Add openmp flags if they work
     simple_test_c = """int main(int argc, char** argv) { return(0); }"""
     omp_test_c = """#include <omp.h>
@@ -137,12 +150,20 @@ else: # We have nibabel
     if os.name == 'nt':
         extbuilder = check_npymath(extbuilder)
 
+
+def _cython_version(pkg_name):
+    from Cython.Compiler.Version import version
+    return version
+
+
 # Installer that checks for install-time dependencies
 class installer(install.install):
     def run(self):
         package_check('numpy', NUMPY_MIN_VERSION)
         package_check('scipy', SCIPY_MIN_VERSION)
         package_check('nibabel', NIBABEL_MIN_VERSION)
+        package_check('cython', CYTHON_MIN_VERSION,
+                      version_getter=_cython_version)
         install.install.run(self)
 
 
@@ -150,8 +171,7 @@ cmdclass = dict(
     build_py=pybuilder,
     build_ext=extbuilder,
     install=installer,
-    install_scripts=install_scripts_bat,
-    sdist=get_pyx_sdist())
+    install_scripts=install_scripts_bat)
 
 
 def main(**extra_args):
