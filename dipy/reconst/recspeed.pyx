@@ -34,7 +34,9 @@ cdef inline double* asdp(cnp.ndarray pt):
     return <double *>pt.data
 
 
-cdef void splitoffset(float *offset, size_t *index, size_t shape) nogil:
+cdef void splitoffset(float *offset,
+                      cnp.npy_intp *index,
+                      cnp.npy_intp shape) nogil:
     """Splits a global offset into an integer index and a relative offset"""
     offset[0] -= .5
     if offset[0] <= 0:
@@ -44,7 +46,7 @@ cdef void splitoffset(float *offset, size_t *index, size_t shape) nogil:
         index[0] = shape - 2
         offset[0] = 1.
     else:
-        index[0] = <size_t> offset[0]
+        index[0] = <cnp.npy_intp> offset[0]
         offset[0] = offset[0] - index[0]
 
 
@@ -65,8 +67,8 @@ def trilinear_interp(cnp.ndarray[cnp.float32_t, ndim=4, mode='strided'] data,
         float y = index[1] / voxel_size[1]
         float z = index[2] / voxel_size[2]
         float weight
-        size_t x_ind, y_ind, z_ind, ii, jj, kk, LL
-        size_t last_d = data.shape[3]
+        cnp.npy_intp x_ind, y_ind, z_ind, ii, jj, kk, LL
+        cnp.npy_intp last_d = data.shape[3]
         bint bounds_check
         cnp.ndarray[cnp.float32_t, ndim=1, mode='c'] result
     bounds_check = (x < 0 or y < 0 or z < 0 or
@@ -299,8 +301,8 @@ def local_maxima(cnp.ndarray odf, cnp.ndarray edges):
 cdef void _cosort(double[::1] A, cnp.npy_intp[::1] B) nogil:
     """ Sorts `A` in-place and applies the same reordering to `B`"""
     cdef:
-        size_t n = A.shape[0]
-        size_t hole
+        cnp.npy_intp n = A.shape[0]
+        cnp.npy_intp hole
         double insert_A
         long insert_B
 
@@ -343,9 +345,9 @@ cdef long _compare_neighbors(double[:] odf, cnp.uint16_t[:, :] edges,
             -2 : odf contains nans
     """
     cdef:
-        size_t lenedges = edges.shape[0]
-        size_t lenodf = odf.shape[0]
-        size_t i
+        cnp.npy_intp lenedges = edges.shape[0]
+        cnp.npy_intp lenodf = odf.shape[0]
+        cnp.npy_intp i
         cnp.uint16_t find0, find1
         double odf0, odf1
         long count = 0

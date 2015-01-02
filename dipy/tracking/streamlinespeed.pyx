@@ -7,10 +7,7 @@ import cython
 
 from libc.math cimport sqrt
 
-cdef extern from "stdlib.h" nogil:
-    ctypedef unsigned long size_t
-    void free(void *ptr)
-    void *malloc(size_t size)
+from libc.stdlib cimport free, malloc
 
 ctypedef float[:,:] float2d
 ctypedef double[:,:] double2d

@@ -20,8 +20,10 @@ cdef cnp.dtype f64_dt = np.dtype(np.float64)
 
 cdef double min_direct_flip_dist(double *a,double *b,
                                  cnp.npy_intp rows) nogil:
-    r""" Minimum of direct and flip average (MDF) distance [Garyfallidis12]
-    between two streamlines.
+    r""" Minimum of direct and flip average distance between two streamlines.
+
+    Minimum of direct and flip average (MDF) distance [Garyfallidis12] between
+    two streamlines.
 
     Parameters
     ----------
@@ -223,14 +225,13 @@ def distance_matrix_mdf(streamlines_a, streamlines_b):
     -------
     DM : array, shape (len(streamlines_a), len(streamlines_b))
         distance matrix
-
     '''
     cdef:
-        size_t i, j, lentA, lentB
+        cnp.npy_intp i, j, lentA, lentB
     # preprocess tracks
     cdef:
-        size_t longest_track_len = 0, track_len
-        longest_track_lenA, longest_track_lenB
+        cnp.npy_intp longest_track_len = 0, track_len
+        cnp.npy_intp longest_track_lenA, longest_track_lenB
         cnp.ndarray[object, ndim=1] tracksA64
         cnp.ndarray[object, ndim=1] tracksB64
         cnp.ndarray[cnp.double_t, ndim=2] DM
@@ -255,7 +256,7 @@ def distance_matrix_mdf(streamlines_a, streamlines_b):
     # cycle over tracks
     cdef:
         cnp.ndarray [cnp.float64_t, ndim=2] t1, t2
-        size_t t1_len, t2_len
+        cnp.npy_intp t1_len, t2_len
         double d[2]
     t_len = tracksA64[0].shape[0]
 
