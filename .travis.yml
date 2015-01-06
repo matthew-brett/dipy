@@ -45,6 +45,7 @@ script:
     # Change into an innocuous directory and find tests from installation
     - mkdir for_testing
     - cd for_testing
+    - echo "backend : agg" > matplotlibrc # No figure windows for mpl
     - if [ "${COVERAGE}" == "1" ]; then
       cp ../.coveragerc .;
       COVER_ARGS="--with-coverage --cover-package dipy";
